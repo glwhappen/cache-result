@@ -16,6 +16,10 @@ def add(a, b):
 
     return a + b
 
+@cache('./cache/sub/{a}/{b}')
+def sub(a = 3, b = 1):
+    return a - b
+
 @cache('./cache/fib/{n}')
 def fib(n):
     """计算斐波那契数列的第n项"""
@@ -44,3 +48,6 @@ if __name__ == '__main__':
     start = time.time()
     print(add(1, 2))  # 第二次运行将从缓存中获取结果，所以会很快
     print('加法 读缓存 - Time taken: ', time.time()-start)
+
+
+    print(sub(a = 10))

@@ -23,7 +23,7 @@ def cache(cache_dir, exclude=None, is_print=False):
             # 获取函数的参数名
             params = inspect.signature(func).parameters
             # 创建一个字典，将参数名和值对应起来
-            args_dict = {list(params.keys())[i]: arg for i, arg in enumerate(args)}
+            args_dict = {name: kwargs.get(name, param.default) if param.default is not inspect.Parameter.empty else args[i] for i, (name, param) in enumerate(params.items())}
             args_dict.update(kwargs)
 
             # 使用参数值来修改路径
