@@ -15,6 +15,13 @@ You can install this package using pip:
 pip install cache_result
 ```
 
+## features
+
+- 可以指定缓存的位置
+- 可以自定义缓存的key，例如函数名、源代码、参数或者关键字参数
+- 可以根据参数的名称指定不同的缓存文件夹
+
+
 ## Usage
 
 Here is an example of how to use the cache decorator:

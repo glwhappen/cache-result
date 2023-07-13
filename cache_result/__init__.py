@@ -20,6 +20,16 @@ def cache(cache_dir, exclude=None, is_print=False):
             # 获取函数的源代码，并删除所有空格和空行
             source_code = inspect.getsource(func)
 
+            # 获取函数的参数名
+            params = inspect.signature(func).parameters
+            # 创建一个字典，将参数名和值对应起来
+            args_dict = {list(params.keys())[i]: arg for i, arg in enumerate(args)}
+            args_dict.update(kwargs)
+
+            # 使用参数值来修改路径
+            modified_cache_dir = cache_dir.format(**args_dict)
+
+
             hash_key = []
             if 'func_name' not in exclude:
                 hash_key.append(func.__name__)
@@ -38,10 +48,10 @@ def cache(cache_dir, exclude=None, is_print=False):
             # 创建一个唯一的文件名，基于函数名、源代码和参数
             key = pickle.dumps(hash_key)
             file_name = hashlib.sha256(key).hexdigest() + '.pickle'
-            file_path = os.path.join(cache_dir, file_name)
+            file_path = os.path.join(modified_cache_dir, file_name)
 
             # 创建缓存目录
-            os.makedirs(cache_dir, exist_ok=True)
+            os.makedirs(modified_cache_dir, exist_ok=True)
 
             # 如果缓存文件存在，直接读取并返回结果
             if os.path.exists(file_path):
