@@ -46,7 +46,6 @@ def cache(cache_dir, exclude=None, is_print=True):
                 tmp_source_code = source_code
                 if 'func_name' not in exclude:
                     tmp_source_code = remove_unused_code(tmp_source_code)
-                    print(tmp_source_code)
                     tmp_source_code = tmp_source_code.replace(func.__name__, '')
 
                 tmp_source_code = re.sub(r'\s', '', tmp_source_code)
