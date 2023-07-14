@@ -5,11 +5,13 @@ import inspect
 import re
 from colorama import Fore, Back, Style
 
-def remove_comments_and_prints(source_code):
+def remove_unused_code(source_code):
     # 删除单行注释
     source_code = re.sub(r'#.*$', "", source_code, flags=re.MULTILINE)
     # 删除print语句
     source_code = re.sub(r'print\(.*\)', "", source_code)
+    # 删除注解
+    source_code = re.sub(r'@cache\(.*\)', '', source_code)
     return source_code
 
 def cache(cache_dir, exclude=None, is_print=True):
@@ -43,7 +45,8 @@ def cache(cache_dir, exclude=None, is_print=True):
             if 'source_code' not in exclude:
                 tmp_source_code = source_code
                 if 'func_name' not in exclude:
-                    tmp_source_code = remove_comments_and_prints(tmp_source_code)
+                    tmp_source_code = remove_unused_code(tmp_source_code)
+                    print(tmp_source_code)
                     tmp_source_code = tmp_source_code.replace(func.__name__, '')
 
                 tmp_source_code = re.sub(r'\s', '', tmp_source_code)
