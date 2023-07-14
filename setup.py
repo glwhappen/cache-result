@@ -6,10 +6,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='cache-result',
-    version='0.1.3',
-    description='A decorator for caching the results of functions',
+    version='0.1.4',
+    description='A python decorator for caching the results of functions',
     long_description=long_description,
     long_description_content_type="text/markdown",
+    project_urls={
+        'Source Code': 'https://github.com/glwhappen/cache-result',
+    },
     author='glwhappen',
     author_email='1597721684@qq.com',
     packages=find_packages(),
