@@ -73,19 +73,16 @@ def cache(cache_dir, exclude=None, is_print=True):
                         with open(file_path, 'wb') as f:
                             pickle.dump(result, f)
                         if is_print:
-                            print(Fore.YELLOW + f'{func.__name__} Saved to cache', os.path.join(os.getcwd(), modified_cache_dir))
-                            print(Style.RESET_ALL)
+                            print(Fore.YELLOW + f'{func.__name__} Saved to cache', os.path.join(os.getcwd(), modified_cache_dir), Style.RESET_ALL)
                 if is_print:
-                    print(Fore.GREEN +f'{func.__name__} Loaded from cache')
-                    print(Style.RESET_ALL)
+                    print(Fore.GREEN +f'{func.__name__} Loaded from cache', Style.RESET_ALL)
             else:
                 # 否则，运行函数并保存结果
                 result = func(*args, **kwargs)
                 with open(file_path, 'wb') as f:
                     pickle.dump(result, f)
                 if is_print:
-                    print(Fore.YELLOW + f'{func.__name__} Saved to cache', os.path.join(os.getcwd(), modified_cache_dir))
-                    print(Style.RESET_ALL)
+                    print(Fore.YELLOW + f'{func.__name__} Saved to cache', os.path.join(os.getcwd(), modified_cache_dir), Style.RESET_ALL)
             return result
         return wrapper
     return decorator
