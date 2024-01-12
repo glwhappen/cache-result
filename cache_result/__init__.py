@@ -3,7 +3,9 @@ import pickle
 import hashlib
 import inspect
 import re
+import sys
 import time
+from loguru import logger
 
 from colorama import Fore, Back, Style
 
@@ -22,7 +24,7 @@ def find_project_root(current_dir):
     # 递归继续向上搜索
     return find_project_root(parent_dir)
 
-def remove_unused_code(source_code):
+def _remove_unused_code(source_code):
     # 删除单行注释
     source_code = re.sub(r'#.*$', "", source_code, flags=re.MULTILINE)
     # 删除多行注释
@@ -31,17 +33,32 @@ def remove_unused_code(source_code):
     source_code = re.sub(r'print\(.*\)', "", source_code)
     # 删除注解
     source_code = re.sub(r'@.*\(.*\)', '', source_code)
+    # 删除def所在的行
+    source_code = re.sub(r'\bdef\s+[\w_]+\s*\([^)]*\):', '', source_code)
     return source_code
 
-def cache(cache_dir, exclude=None, is_print=True):
+
+def _to_cache(func, file_path, result, is_print):
+    with open(file_path, 'wb') as f:
+        pickle.dump(result, f)
+    if is_print:
+        print(Fore.YELLOW + f'{func.__name__} Saved to cache', file_path, Style.RESET_ALL)
+
+
+def cache(cache_dir, is_print=True, is_print_path = False, has_source_code=False, exclude_args: list[str]=None, debug=False, hash_length=16):
     """
     缓存函数的装饰器
     :param cache_dir: 缓存目录
     :param exclude: 排除的参数 ['func_name', 'source_code', 'args'] 函数名、源代码、函数参数
 
     """
-    if exclude is None:
-        exclude = []
+    if exclude_args is None:
+        exclude_args = []
+    logger.remove()
+    if debug:
+        logger.add(sys.stderr, level="DEBUG", enqueue=False)
+    else:
+        logger.add(sys.stderr, level="INFO", enqueue=False)
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -51,8 +68,16 @@ def cache(cache_dir, exclude=None, is_print=True):
             # 获取函数的参数名
             params = inspect.signature(func).parameters
             # 创建一个字典，将参数名和值对应起来
-            args_dict = {name: kwargs.get(name, param.default) if param.default is not inspect.Parameter.empty else args[i] for i, (name, param) in enumerate(params.items())}
+            args_dict = {name: kwargs.get(name) if name in kwargs else args[i] if i < len(args) else param.default for i, (name, param) in enumerate(params.items())}
+
+            logger.debug(f"row args_dict: {args_dict}")
             args_dict.update(kwargs)
+            logger.debug(f"row args_dict update(kwargs): {args_dict}")
+            args_dict = {key: value for key, value in args_dict.items() if key not in exclude_args}
+
+            logger.debug(f"filtered args_dict: {args_dict}")
+            sorted(args_dict)
+            logger.debug(f"sorted args_dict: {args_dict}")
             # print('args_dict:', str(args_dict))
             # print('args:', args)
             # print('kwargs:', kwargs)
@@ -67,54 +92,59 @@ def cache(cache_dir, exclude=None, is_print=True):
             # 项目根目录的路径
             project_root = find_project_root(os.path.dirname(current_file_path))
 
-
-
-
-            hash_key = []
-            if 'func_name' not in exclude:
-                hash_key.append(func.__name__)
-            if 'source_code' not in exclude:
-                tmp_source_code = source_code
-                if 'func_name' not in exclude:
-                    tmp_source_code = remove_unused_code(tmp_source_code)
-                    tmp_source_code = tmp_source_code.replace(func.__name__, '')
-
-                tmp_source_code = re.sub(r'\s', '', tmp_source_code)
-                hash_key.append(tmp_source_code)
-            if 'args' not in exclude:
-                hash_key.append(str(args_dict))
-
-            # 创建一个唯一的文件名，基于函数名、源代码和参数
-            key = pickle.dumps(hash_key)
-            file_name = hashlib.sha256(key).hexdigest() + '.pickle'
-            file_path = os.path.join(project_root, modified_cache_dir, file_name)
-            # print(file_path)
             # 创建缓存目录
             os.makedirs(os.path.join(project_root, modified_cache_dir), exist_ok=True)
 
+
+            hash_key = []
+            hash_key.append(str(args_dict))
+
+            if has_source_code:
+                tmp_source_code = source_code
+                tmp_source_code = _remove_unused_code(tmp_source_code)
+                tmp_source_code = re.sub(r'\s', '', tmp_source_code)
+                logger.debug(f"add source_code: {tmp_source_code}")
+                hash_key.append(tmp_source_code)
+
+            logger.info(f"hash_key content: {hash_key}")
+            # 创建一个唯一的文件名，基于函数名、源代码和参数
+            key = pickle.dumps(hash_key)
+            logger.debug(f"hash_key to key: {hashlib.sha256(key).hexdigest()}")
+            logger.info(f"key to short: {hashlib.sha256(key).hexdigest()[:hash_length]}")
+            file_name = hashlib.sha256(key).hexdigest()[:hash_length] + '.pickle'
+            file_path = os.path.join(project_root, modified_cache_dir, file_name)
+
+            if is_print_path:
+                show_file_name = file_path
+            else:
+                show_file_name = os.path.join(modified_cache_dir, file_name)
             # 如果缓存文件存在，直接读取并返回结果
             if os.path.exists(file_path):
                 start = time.time()
                 if is_print:
-                    print(Fore.GREEN + f'{func.__name__} Loading from cache {file_path}', Style.RESET_ALL, end=' ')
+                    print(Fore.GREEN + f'{func.__name__} Loading from cache {show_file_name}', Style.RESET_ALL, end=' ')
                 with open(file_path, 'rb') as f:
                     try:
                         result = pickle.load(f)
-                    except: # 如果pickle文件损坏，重新运行函数
+                    except:  # 如果pickle文件损坏，重新运行函数
                         result = func(*args, **kwargs)
-                        with open(file_path, 'wb') as f:
-                            pickle.dump(result, f)
-                        if is_print:
-                            print(Fore.YELLOW + f'{func.__name__} Saved to cache', file_path, Style.RESET_ALL)
+                        _to_cache(func, file_path, result, is_print)
                 if is_print:
-                    print(Fore.RED +f'{(time.time() - start):.1f}s ok', Style.RESET_ALL)
+                    print(Fore.RED + f'{(time.time() - start):.1f}s ok', Style.RESET_ALL)
             else:
                 # 否则，运行函数并保存结果
                 result = func(*args, **kwargs)
-                with open(file_path, 'wb') as f:
-                    pickle.dump(result, f)
-                if is_print:
-                    print(Fore.YELLOW + f'{func.__name__} Saved to cache', file_path, Style.RESET_ALL)
+                _to_cache(func, file_path, result, is_print)
+                if has_source_code:
+                    # 包含代码了，多创建一个不包含代码的
+                    logger.debug("哈希值包含了代码，多创建一个不包含代码的，方便后续更多操作")
+                    key = pickle.dumps([str(args_dict)])
+
+                    file_name = hashlib.sha256(key).hexdigest()[:hash_length] + '.pickle'
+                    file_path = os.path.join(project_root, modified_cache_dir, file_name)
+                    _to_cache(func, file_path, result, is_print)
+
+
             return result
         return wrapper
     return decorator
