@@ -30,6 +30,8 @@ pip install cache_result
 
 ## Usage
 
+需要在根目录创建一个 `.projectroot` 文件，用来标识项目的根目录，这样缓存文件都会创建到根目录
+
 
 缓存的计算斐波那契数列的第n项
 

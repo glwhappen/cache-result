@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='cache-result',
-    version='0.1.7',
+    version='0.1.8',
     description='A python decorator for caching the results of functions',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,5 +16,7 @@ setup(
     author='glwhappen',
     author_email='1597721684@qq.com',
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        'colorama==0.4.6'  # Specify the exact version of colorama required
+    ],
 )
