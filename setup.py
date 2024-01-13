@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='cache-result',
-    version='0.2.5',
+    version='0.2.6',
     description='A python decorator for caching the results of functions',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,7 +17,7 @@ setup(
     author_email='1597721684@qq.com',
     packages=find_packages(),
     install_requires=[
-        'colorama==0.4.6',
-        'loguru==0.7.2',
+        'colorama',
+        'loguru',
     ],
 )
