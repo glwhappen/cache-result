@@ -41,12 +41,13 @@ def find_project_root(current_dir):
     """
     # 检查当前目录是否包含标识文件
     if os.path.isfile(os.path.join(current_dir, '.projectroot')):
-        return current_dir
+        logger.debug(f"直接找到.projectroot {current_dir}")
+        return True, current_dir
     # 获取上一级目录
     parent_dir = os.path.dirname(current_dir)
     if parent_dir == current_dir:
-        # 已经到达了文件系统的根目录
-        raise FileNotFoundError("无法找到项目根目录标识文件, 请在项目根目录下创建 .projectroot 文件.")
+        logger.debug(f"已经到达了文件系统的根目录 没找到.projectroot {current_dir}")
+        return False, current_dir
     # 递归继续向上搜索
     return find_project_root(parent_dir)
 
@@ -156,14 +157,17 @@ def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_co
             logger.debug(f"row cache_dir add args: {modified_cache_dir}")
 
             # 当前文件的绝对路径
-            current_file_path = os.path.abspath(__file__)
+            # current_file_path = os.path.abspath(__file__)
+            # 获取当前执行的 Python 脚本的完整路径
+            current_file_path = os.path.abspath(sys.argv[0])
+            logger.debug(f"获取当前执行的 Python 脚本的完整路径 {current_file_path}")
 
-            try:
-                # 项目根目录的路径
-                project_root = find_project_root(os.path.dirname(current_file_path))
-            except:
+
+            has_project_root, project_root = find_project_root(os.path.dirname(current_file_path))
+            logger.debug(f"寻找project_root {has_project_root} {project_root}")
+            if has_project_root == False:
                 create_file_in_script_dir('.projectroot')
-                project_root = find_project_root(os.path.dirname(current_file_path))
+                has_project_root, project_root = find_project_root(os.path.dirname(current_file_path))
 
             # 创建缓存目录
             os.makedirs(os.path.join(project_root, modified_cache_dir), exist_ok=True)
