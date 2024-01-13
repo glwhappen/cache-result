@@ -10,6 +10,31 @@ from loguru import logger
 
 from colorama import Fore, Back, Style
 
+def create_file_in_script_dir(filename):
+    """
+    在当前执行的 Python 脚本所在的目录下创建一个指定名称的文件（如果文件不存在）。
+    """
+    # 获取当前执行的 Python 脚本的完整路径
+    script_path = os.path.abspath(sys.argv[0])
+
+    # 获取脚本所在的目录
+    script_dir = os.path.dirname(script_path)
+
+    # 拼接完整的文件路径
+    file_path = os.path.join(script_dir, filename)
+    logger.warning(f"未找到项目根目录标识文件{filename}，自动创建 {file_path}")
+
+    # 检查文件是否已存在
+    if not os.path.isfile(file_path):
+        # 创建文件
+        with open(file_path, 'w') as file:
+            file.write('This file is automatically created. used by cache-result')
+        logger.info(f"文件 '{filename}' 已在 {script_dir} 创建。")
+    else:
+        logger.info(f"文件 '{filename}' 已存在于 {script_dir}。")
+
+
+
 def find_project_root(current_dir):
     """
     向上搜索直到找到标识文件，确定项目的根目录
@@ -133,8 +158,12 @@ def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_co
             # 当前文件的绝对路径
             current_file_path = os.path.abspath(__file__)
 
-            # 项目根目录的路径
-            project_root = find_project_root(os.path.dirname(current_file_path))
+            try:
+                # 项目根目录的路径
+                project_root = find_project_root(os.path.dirname(current_file_path))
+            except:
+                create_file_in_script_dir('.projectroot')
+                project_root = find_project_root(os.path.dirname(current_file_path))
 
             # 创建缓存目录
             os.makedirs(os.path.join(project_root, modified_cache_dir), exist_ok=True)
