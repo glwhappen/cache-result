@@ -45,7 +45,7 @@ def _to_cache(func, file_path, result, is_print):
         print(Fore.YELLOW + f'{func.__name__} Saved to cache', file_path, Style.RESET_ALL)
 
 
-def cache(cache_dir, is_print=True, is_print_path = False, has_source_code=False, exclude_args: list[str]=None, debug=False, hash_length=16):
+def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_code=False, exclude_args: list[str]=None, debug=False, hash_length=16):
     """
     缓存函数的装饰器
     :param cache_dir: 缓存目录
@@ -58,7 +58,7 @@ def cache(cache_dir, is_print=True, is_print_path = False, has_source_code=False
     if debug:
         logger.add(sys.stderr, level="DEBUG", enqueue=False)
     else:
-        logger.add(sys.stderr, level="INFO", enqueue=False)
+        logger.add(sys.stderr, level="WARNING", enqueue=False)
 
     def decorator(func):
         def wrapper(*args, **kwargs):

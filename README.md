@@ -1,53 +1,76 @@
 # Cache Function Result
 
-## Description
+## 描述
 
-这是一个Python包，用于缓存函数的返回结果。缓存的结果持久化在本地。
+这个Python包专门设计用于缓存函数的返回结果，以便于将结果持久化并保存在本地。它能够基于函数的参数内容和代码变动来判定是否需要读取已有的缓存。
 
-This is a Python package that provides a decorator for caching the results of functions. The cache is stored in a specified directory, and the cache key is generated based on the function name, source code, and arguments. The decorator allows you to exclude certain elements from the cache key, such as the function name, source code, arguments, or keyword arguments.
+## 设计理念
 
-## Use Case
+- **持久性保障**：函数运行的结果将永久保存，除非用户主动删除缓存。
+- **灵活分类存储**：缓存结果可以按重要程度存储在不同的子文件夹中，便于管理和控制。
+- **手动控制更新**：若需要重新运行函数以获得最新结果，用户只需手动删除相应的缓存文件。
 
-- 你有一个计算密集型的函数，它需要花费很长时间来计算结果。你希望将结果缓存起来，以便下次使用时可以快速获取结果。
-- 你有一个函数，它需要从网络上获取数据，但是获取的内容一般情况下不会改变，那么久可以缓存一下，如果改变了手动删除缓存即可。
+## 应用场景
 
-## Installation
+- **加速计算处理**：对于耗时较长的计算密集型函数，可以通过缓存其结果，以便下次调用时能够迅速获取到。
+- **稳定数据获取**：对于从网络获取数据的函数，如果获取的内容通常不会发生变化，可以通过缓存来保存结果。一旦数据有所改变，用户可以手动删除缓存以更新数据。
+- **优化开发效率**：在开发大型语言模型时，可以通过缓存接口数据来节省成本并加快响应速度。
 
-You can install this package using pip:
+## 功能特点
+
+- **灵活的缓存位置设置**：用户可以自由指定缓存保存的位置，并且随时更改位置设置。
+- **共享缓存内容**：缓存的内容可以轻松分享给他人，使其他用户也能够利用已有的缓存数据。
+- **按参数名称分类缓存**：可以根据不同的参数名称将缓存保存在不同的文件夹中，便于管理和检索。
+
+## 安装指南
+
+此包可通过pip进行安装：
 
 ```bash
 pip install cache_result
 ```
 
-## features
+## 快速使用
 
-- 可以自由指定缓存的位置，后续也可以随意的更改；
-- 缓存的内容甚至可以发送给其他人，其他人也可以使用缓存的内容；
-- 可以自定义缓存的key，例如函数名、源代码、参数或者关键字参数；
-- 可以根据参数的名称指定不同的缓存文件夹；
-- 缓存的key会根据源代码的变化而变化，但是如果修改了源代码中的输出，增加了空行或者空格，那么缓存的key不会发生变化；
+> 注意事项：需要在项目根目录创建一个 `.projectroot` 文件，用来标识项目的根目录，这样缓存文件都会创建到根目录
 
-## 参数说明
+```python
+import time
 
-- `has_source_code`: 是否包含缓存函数的代码，默认 `false` 只会包含代码体，并且删除了代码中的输出注释的影响
-- `is_print`: 是否输出缓存文件位置，默认为 `true`
-- `exclude_args`: 排除一些参数，某些情况下不想让一些参数加入缓存，可以排除，默认为空
-- `debug`: debug 模式，开启详细日志，默认为 `false`
-- `hash_length`: 生成的文件长度，默认 `16`
+from cache_result import cache
 
-## Usage
+@cache()
+def add(a, b):
+    time.sleep(4)
+    return a + b
 
-需要在根目录创建一个 `.projectroot` 文件，用来标识项目的根目录，这样缓存文件都会创建到根目录
+print("第一次运行需要花费4秒，再次运行只需要瞬间")
+print(add(1, 2))
+```
 
 
-缓存的计算斐波那契数列的第n项
+## 参数详解
 
+- **代码包含设置** (`has_source_code`): 决定是否在缓存中包含函数的源代码。默认为 `false`，此时缓存将仅包含代码体，且忽略代码中的输出注释。
+- **缓存位置提示** (`is_print`): 控制是否输出缓存文件的位置信息。默认设置为 `true`，便于用户了解缓存文件的存储位置。
+- **参数排除选项** (`exclude_args`): 允许用户排除特定参数，避免某些参数被包含在缓存中。默认为空，即不排除任何参数。
+- **调试模式** (`debug`): 启用此模式将开启详细的日志记录，方便调试和追踪问题。默认为 `false`。
+- **哈希长度设置** (`hash_length`): 定义生成的缓存文件名的长度。默认长度为 `16`。
+
+
+
+## 更多用法
+
+> 注意事项：需要在项目根目录创建一个 `.projectroot` 文件，用来标识项目的根目录，这样缓存文件都会创建到根目录
+
+
+缓存的计算斐波那契数列的第n项，可以通过设置占位符，来让不同的结果缓存到不同的文件夹中
 
 ```python
 import time
 from cache_result import cache
 
-@cache('./cache/fib/{n}')
+@cache('cache/fib/{n}')
 def fib(n):
     """计算斐波那契数列的第n项"""
     if n < 2:
@@ -56,16 +79,14 @@ def fib(n):
         return fib(n-1) + fib(n-2)
 
 if __name__ == '__main__':
-    print("斐波那契数列缓存测试")
+    print("计算斐波那契数列花费时间：")
     # 测试函数
     start = time.time()
-    print(fib(30))  # 第一次计算将花费一些时间
-    print('斐波那契数列 计算 - Time taken: ', time.time()-start)
+    print(fib(40))  # 第一次计算将花费一些时间
+    print('Time: ', time.time()-start)
 
-    start = time.time()
-    print(fib(30))  # 第二次运行将从缓存中获取结果，所以会很快
-    print('斐波那契数列 读缓存 - Time taken: ', time.time()-start)
-
+    print("如果cache中有缓存结果了，再次运行会非常快")
+    print("删除cache中的内容即可重新执行函数")
 ```
 
 缓存路径可以随便写，方便自己区分
@@ -74,7 +95,7 @@ if __name__ == '__main__':
 import time
 from cache_result import cache
 
-@cache('./cache/缓存/自己随便指定一些路径/方便自己区分/时间可以控制版本/20230713/add', exclude=['func_name'], is_print=True)
+@cache('cache/缓存/自己随便指定一些路径/方便自己区分/时间可以控制版本/20230713/add', is_print=True)
 def add(a, b):
     # Your expensive function implementation here
     print("add", a, b)
