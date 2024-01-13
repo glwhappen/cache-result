@@ -1,3 +1,4 @@
+import datetime
 import os
 import pickle
 import hashlib
@@ -45,12 +46,49 @@ def _to_cache(func, file_path, result, is_print):
         print(Fore.YELLOW + f'{func.__name__} Saved to cache', file_path, Style.RESET_ALL)
 
 
-def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_code=False, exclude_args: list[str]=None, debug=False, hash_length=16):
+def format_cache_time(cache_dir_format):
+    """
+    格式化缓存目录字符串中的时间占位符。
+    :param cache_dir_format: 带有时间占位符的缓存目录格式。
+    :return: 格式化后的缓存目录字符串。
+    """
+
+    # 定义一个函数，用于将用户定义的时间格式转换为 datetime 可以识别的格式
+    def format_time_string(time_format):
+        format_mappings = {
+            "YYYY": "%Y",
+            "MM": "%m",   # 月份
+            "DD": "%d",
+            "HH": "%H",   # 小时
+            "mm": "%M",   # 分钟
+            "ss": "%S"    # 秒
+        }
+        for key, value in format_mappings.items():
+            time_format = time_format.replace(key, value)
+        return time_format
+
+    # 使用正则表达式查找时间格式占位符
+    time_format_match = re.search(r'\{time:(.+?)\}', cache_dir_format)
+    if time_format_match:
+        user_defined_format = time_format_match.group(1)
+        datetime_format = format_time_string(user_defined_format)
+        current_time = datetime.datetime.now().strftime(datetime_format)
+        formatted_cache_dir = re.sub(r'\{time:.+?\}', current_time, cache_dir_format)
+    else:
+        formatted_cache_dir = cache_dir_format
+
+    return formatted_cache_dir
+
+def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_code=True, exclude_args: list[str]=None, debug=False, hash_length=16):
     """
     缓存函数的装饰器
-    :param cache_dir: 缓存目录
-    :param exclude: 排除的参数 ['func_name', 'source_code', 'args'] 函数名、源代码、函数参数
-
+    :param cache_dir: 缓存目录，支持时间格式化
+    :param is_print: 是否打印缓存使用信息
+    :param is_print_path: 是否打印缓存路径
+    :param has_source_code: 是否包含源代码
+    :param exclude_args: 排除的参数列表
+    :param debug: 是否开启debug模式
+    :param hash_length: 缓存文件名的哈希长度
     """
     if exclude_args is None:
         exclude_args = []
@@ -81,10 +119,16 @@ def cache(cache_dir='cache', is_print=True, is_print_path = False, has_source_co
             # print('args_dict:', str(args_dict))
             # print('args:', args)
             # print('kwargs:', kwargs)
+            logger.debug(f"row cache_dir: {cache_dir}")
+            modified_cache_dir = cache_dir
+            # 格式化 cache_dir 中的时间占位符
+            modified_cache_dir = format_cache_time(modified_cache_dir)
+            logger.debug(f"row cache_dir add time: {modified_cache_dir}")
+            # print('modified_cache_dir:', modified_cache_dir)
 
             # 使用参数值来修改路径
-            modified_cache_dir = cache_dir.format(**args_dict)
-            # print('modified_cache_dir:', modified_cache_dir)
+            modified_cache_dir = modified_cache_dir.format(**args_dict)
+            logger.debug(f"row cache_dir add args: {modified_cache_dir}")
 
             # 当前文件的绝对路径
             current_file_path = os.path.abspath(__file__)
