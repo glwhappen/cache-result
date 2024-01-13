@@ -1,5 +1,9 @@
 # Cache Function Result
 
+[![Downloads](https://static.pepy.tech/badge/cache-result)](https://pepy.tech/project/cache-result)
+[![Downloads](https://static.pepy.tech/badge/cache-result/month)](https://pepy.tech/project/cache-result)
+[![Downloads](https://static.pepy.tech/badge/cache-result/week)](https://pepy.tech/project/cache-result)
+
 ## 描述
 
 这个Python包专门设计用于缓存函数的返回结果，以便于将结果持久化并保存在本地。它能够基于函数的参数内容和代码变动来判定是否需要读取已有的缓存。
